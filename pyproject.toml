@@ -21,6 +21,9 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
+dependencies = [
+    "numpy>=1.21",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -36,4 +39,24 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+# The suite uses two import styles -- `from src.fusion...` (needs the repo root)
+# and `from fusion...` after inserting src/ (needs src). Locally `python -m pytest`
+# puts the CWD on sys.path so both resolve; CI runs bare `pytest`, which does not.
+# Declaring the root explicitly makes collection invocation-independent.
+pythonpath = ["."]
+# CWD-independent quarantine: `--ignore=tests/_unimplemented` below is a RELATIVE
+# path, so it silently no-ops whenever pytest is not invoked from the repo root.
+# norecursedirs matches by directory NAME and is safe from any CWD.
+norecursedirs = [
+    ".*",
+    "*.egg",
+    "_darcs",
+    "build",
+    "CVS",
+    "dist",
+    "node_modules",
+    "venv",
+    "{arch}",
+    "_unimplemented",
+]
 addopts = "-v --tb=short --ignore=tests/_unimplemented"
