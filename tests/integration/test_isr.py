@@ -6,22 +6,18 @@ when multiple components are combined.
 from __future__ import annotations
 
 import math
-import time
 
 import numpy as np
-import pytest
 
 from src.fusion.ekf import BearingOnlyEKF, RangeBearingEKF
 from src.fusion.orbital_graph import OrbitalGraph, OrbitalObject
 from src.fusion.track import TrackConfig, TrackManager, TrackStatus
 from src.isr.collection import (
-    CollectionPlan,
     ISRCollectionManager,
     Priority,
     Sensor,
     SensorStatus,
     SensorType,
-    TaskStatus,
 )
 from src.isr.dissemination import (
     Classification,
@@ -38,7 +34,6 @@ from src.isr.entity_resolution import (
     EntityType,
     INTSource,
     ResolvedEntity,
-    normalize_name,
 )
 from src.isr.dissemination import Priority as DisseminationPriority
 
@@ -155,7 +150,7 @@ class TestCollectionToTrackPipeline:
     def test_collection_priority_affects_track_priority(self):
         """Higher priority collection tasks should be processed first."""
         cm = _make_collection_manager()
-        tm = _make_track_manager()
+        _make_track_manager()
 
         cm.register_sensor(_make_sensor("RADAR-1", SensorType.RADAR, max_concurrent=3))
 
@@ -260,7 +255,7 @@ class TestCollectionToEntityResolutionPipeline:
 
         # Create entity observations from collection results
         radar_obs = EntityObservation(
-            source=IGINTSource.GEOINT,
+            source=INTSource.GEOINT,
             entity_type=EntityType.VEHICLE,
             name="Vehicle-Alpha",
             attributes={"type": "truck"},
@@ -268,7 +263,7 @@ class TestCollectionToEntityResolutionPipeline:
             reliability=0.9,
         )
         sigint_obs = EntityObservation(
-            source=IGINTSource.SIGINT,
+            source=INTSource.SIGINT,
             entity_type=EntityType.VEHICLE,
             name="Vehicle-Alpha",
             attributes={"type": "truck"},
@@ -276,7 +271,7 @@ class TestCollectionToEntityResolutionPipeline:
             reliability=0.8,
         )
         humint_obs = EntityObservation(
-            source=IGINTSource.HUMINT,
+            source=INTSource.HUMINT,
             entity_type=EntityType.VEHICLE,
             name="Vehicle Alpha",
             attributes={"type": "truck"},
@@ -324,7 +319,7 @@ class TestCollectionToEntityResolutionPipeline:
         # Create observations from each source
         observations = [
             EntityObservation(
-                source=IGINTSource.GEOINT,
+                source=INTSource.GEOINT,
                 entity_type=EntityType.AIRCRAFT,
                 name="Aircraft-1",
                 attributes={"type": "fighter"},
@@ -332,7 +327,7 @@ class TestCollectionToEntityResolutionPipeline:
                 reliability=0.9,
             ),
             EntityObservation(
-                source=IGINTSource.SIGINT,
+                source=INTSource.SIGINT,
                 entity_type=EntityType.AIRCRAFT,
                 name="Aircraft-1",
                 attributes={"type": "fighter"},
@@ -340,7 +335,7 @@ class TestCollectionToEntityResolutionPipeline:
                 reliability=0.85,
             ),
             EntityObservation(
-                source=IGINTSource.GEOINT,
+                source=INTSource.GEOINT,
                 entity_type=EntityType.AIRCRAFT,
                 name="Aircraft-1",
                 attributes={"type": "fighter"},
@@ -348,7 +343,7 @@ class TestCollectionToEntityResolutionPipeline:
                 reliability=0.8,
             ),
             EntityObservation(
-                source=IGINTSource.GEOINT,
+                source=INTSource.GEOINT,
                 entity_type=EntityType.AIRCRAFT,
                 name="Aircraft-1",
                 attributes={"type": "fighter"},
@@ -401,7 +396,7 @@ class TestCollectionToEntityResolutionPipeline:
 
         # Create observations
         obs1 = EntityObservation(
-            source=IGINTSource.GEOINT,
+            source=INTSource.GEOINT,
             entity_type=EntityType.VESSEL,
             name="Ship-1",
             attributes={"type": "destroyer"},
@@ -409,7 +404,7 @@ class TestCollectionToEntityResolutionPipeline:
             reliability=0.9,
         )
         obs2 = EntityObservation(
-            source=IGINTSource.GEOINT,
+            source=INTSource.GEOINT,
             entity_type=EntityType.VESSEL,
             name="Ship-1",
             attributes={"type": "destroyer"},
@@ -484,7 +479,7 @@ class TestTrackToDisseminationPipeline:
         )
 
         assert product.product_type == ProductType.ALERT
-        assert product.priority == Priority.CRITICAL
+        assert product.priority == DisseminationPriority.CRITICAL
         assert track.track_id in product.content
 
     def test_track_summary_generates_summary_product(self):
@@ -575,12 +570,12 @@ class TestEntityToDisseminationPipeline:
 
     def test_resolved_entity_generates_report(self):
         """A resolved entity should be includable in a report product."""
-        resolver = _make_entity_resolver()
+        _make_entity_resolver()
         gen = _make_product_generator()
 
         # Create observations
         obs = EntityObservation(
-            source=IGINTSource.GEOINT,
+            source=INTSource.GEOINT,
             entity_type=EntityType.PERSON,
             name="John Smith",
             attributes={"rank": "captain"},
@@ -611,13 +606,13 @@ class TestEntityToDisseminationPipeline:
 
         # Create observations with different reliability
         high_rel_obs = EntityObservation(
-            source=IGINTSource.GEOINT,
+            source=INTSource.GEOINT,
             entity_type=EntityType.VESSEL,
             name="Ship-1",
             reliability=0.95,
         )
         low_rel_obs = EntityObservation(
-            source=IGINTSource.OSINT,
+            source=INTSource.OSINT,
             entity_type=EntityType.VESSEL,
             name="Ship-1",
             reliability=0.3,
@@ -642,13 +637,13 @@ class TestEntityToDisseminationPipeline:
 
     def test_entity_sharing_respects_classification(self):
         """Entity products should only be shared with authorized partners."""
-        resolver = _make_entity_resolver()
+        _make_entity_resolver()
         gen = _make_product_generator()
         sharing = _make_coalition_sharing()
 
         # Create a secret entity product
         obs = EntityObservation(
-            source=IGINTSource.SIGINT,
+            source=INTSource.SIGINT,
             entity_type=EntityType.PERSON,
             name="Agent-X",
             reliability=0.9,
@@ -722,7 +717,7 @@ class TestOrbitalGraphToDisseminationPipeline:
             source="GEOINT",
         )
         assert product.product_type == ProductType.ALERT
-        assert product.priority == Priority.CRITICAL
+        assert product.priority == DisseminationPriority.CRITICAL
 
     def test_orbital_similarity_generates_report(self):
         """Orbital similarity analysis should generate a report."""
@@ -826,7 +821,7 @@ class TestFullISRPipeline:
         # 3. PROCESSING (Entity Resolution)
         resolver = _make_entity_resolver()
         obs = EntityObservation(
-            source=IGINTSource.GEOINT,
+            source=INTSource.GEOINT,
             entity_type=EntityType.VEHICLE,
             name="Vehicle-1",
             attributes={"type": "truck"},
@@ -1353,12 +1348,12 @@ class TestEntityToOrbitalGraphPipeline:
 
     def test_resolved_entity_creates_orbital_object(self):
         """A resolved entity should create an orbital object."""
-        resolver = _make_entity_resolver()
+        _make_entity_resolver()
         graph = _make_orbital_graph()
 
         # Create observations
         obs = EntityObservation(
-            source=IGINTSource.GEOINT,
+            source=INTSource.GEOINT,
             entity_type=EntityType.VEHICLE,
             name="Vehicle-1",
             location=(40.0, -73.0),
@@ -1386,7 +1381,7 @@ class TestEntityToOrbitalGraphPipeline:
 
     def test_multiple_entities_create_orbital_graph(self):
         """Multiple resolved entities should create a graph."""
-        resolver = _make_entity_resolver()
+        _make_entity_resolver()
         graph = _make_orbital_graph(proximity_threshold=1000.0)
 
         # Create observations for multiple entities
@@ -1398,7 +1393,7 @@ class TestEntityToOrbitalGraphPipeline:
 
         for entity_id, name, location in entities_data:
             obs = EntityObservation(
-                source=IGINTSource.GEOINT,
+                source=INTSource.GEOINT,
                 entity_type=EntityType.VEHICLE,
                 name=name,
                 location=location,
@@ -1491,7 +1486,7 @@ class TestFullPipelineMultipleSensors:
         resolver = _make_entity_resolver()
         observations = [
             EntityObservation(
-                source=IGINTSource.GEOINT,
+                source=INTSource.GEOINT,
                 entity_type=EntityType.AIRCRAFT,
                 name="Aircraft-1",
                 attributes={"type": "fighter"},
@@ -1499,7 +1494,7 @@ class TestFullPipelineMultipleSensors:
                 reliability=0.9,
             ),
             EntityObservation(
-                source=IGINTSource.SIGINT,
+                source=INTSource.SIGINT,
                 entity_type=EntityType.AIRCRAFT,
                 name="Aircraft-1",
                 attributes={"type": "fighter"},
@@ -1507,7 +1502,7 @@ class TestFullPipelineMultipleSensors:
                 reliability=0.85,
             ),
             EntityObservation(
-                source=IGINTSource.GEOINT,
+                source=INTSource.GEOINT,
                 entity_type=EntityType.AIRCRAFT,
                 name="Aircraft-1",
                 attributes={"type": "fighter"},
@@ -1762,7 +1757,7 @@ class TestFullPipelineAllComponents:
         # 3. PROCESSING (Entity Resolution)
         resolver = _make_entity_resolver()
         obs = EntityObservation(
-            source=IGINTSource.GEOINT,
+            source=INTSource.GEOINT,
             entity_type=EntityType.VEHICLE,
             name="Vehicle-1",
             attributes={"type": "truck"},
@@ -1861,7 +1856,7 @@ class TestFullPipelineAllComponents:
 
         channel = router.route(product)
         assert channel == "immediate"
-        assert product.priority == Priority.CRITICAL
+        assert product.priority == DisseminationPriority.CRITICAL
 
 
 # ---------------------------------------------------------------------------
@@ -1956,7 +1951,7 @@ class TestPipelineEdgeCases:
         )
 
         obs = EntityObservation(
-            source=IGINTSource.GEOINT,
+            source=INTSource.GEOINT,
             entity_type=EntityType.PERSON,
             name="Unknown",
         )
@@ -1995,7 +1990,7 @@ class TestPipelineEdgeCases:
         # Should not raise
         text_output = formatter.format_text(product)
         json_output = formatter.format_json(product)
-        xml_output = formatter.format_xml(product)
+        formatter.format_xml(product)
 
         assert "<script>" in text_output
         assert "product_id" in json_output

@@ -12,12 +12,11 @@ import math
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 
 from src.isr.entity_resolution import (
     EntityObservation,
     EntityResolver,
-    EntityType,
     INTSource,
     ResolvedEntity,
     normalize_name,

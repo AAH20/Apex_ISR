@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 
@@ -70,7 +70,6 @@ THDT = 4.3752691e-3
 class SGP4Error(Exception):
     """Exception raised for SGP4 propagation errors."""
 
-    pass
 
 
 # ─── Data Classes ─────────────────────────────────────────────────────────────
@@ -773,11 +772,11 @@ class SGP4Propagator:
         Returns:
             Tuple of (position, velocity) in km and km/s
         """
-        tle = self.tle
-
-        # Update for secular gravity and atmospheric drag
-        mm = self.no + 0.75 * CK2 * self.x3thm1 / (self.ao * self.ao * math.sqrt(1.0 - self.eccentricity * self.eccentricity)) * tsince
-        nm = self.no
+        # Update for secular gravity and atmospheric drag.
+        # NOTE: an earlier revision computed `mm` here from self.no and immediately
+        # overwrote it below; that line was dead and misleading, so it is gone. The
+        # mean anomaly is seeded from self.mean_anomaly and advanced in the secular
+        # block further down.
         em = self.eccentricity
         inclm = self.inclination
         argpm = self.arg_of_perigee
@@ -789,7 +788,6 @@ class SGP4Propagator:
         cosim = math.cos(inclm)
 
         # Update for secular terms
-        t2 = tsince * tsince
         nodem = nodem + 0.75 * CK2 * self.x7thm1 / (self.ao * self.ao) * tsince
         argpm = argpm + 0.75 * CK2 * self.x1mth2 / (self.ao * self.ao) * tsince
         mm = mm + self.no * tsince
@@ -820,8 +818,11 @@ class SGP4Propagator:
         el2 = 1.0 - e * e
         pl = self.ao * el2
         r = self.ao * (1.0 - ecose)
-        rdot = math.sqrt(self.ao) * esine / r
-        rfdot = math.sqrt(pl) / r
+        # Radial / transverse rates in ER/min. XKE (= sqrt(GM) in ER^1.5/min) is
+        # REQUIRED here: sqrt(ao)/r and sqrt(pl)/r are dimensionless, so without it
+        # the speed comes out 1/XKE = 13.45x too large (103.5 km/s instead of 7.7).
+        rdot = XKE * math.sqrt(self.ao) * esine / r
+        rfdot = XKE * math.sqrt(pl) / r
         temp = esine / (1.0 - math.sqrt(el2) * ecose)
         cosu = (cose - e) / (1.0 - ecose)
         sinu = (math.sqrt(1.0 - e * e) * sine) / (1.0 - ecose)
@@ -879,7 +880,6 @@ class SGP4Propagator:
         """
         # Simplified SDP4 for deep-space orbits
         # For deep-space, use a simplified model
-        tle = self.tle
 
         # Update mean anomaly
         mm = self.mean_anomaly + self.no * tsince
@@ -902,8 +902,11 @@ class SGP4Propagator:
         el2 = 1.0 - e * e
         pl = self.ao * el2
         r = self.ao * (1.0 - ecose)
-        rdot = math.sqrt(self.ao) * esine / r
-        rfdot = math.sqrt(pl) / r
+        # Radial / transverse rates in ER/min. XKE (= sqrt(GM) in ER^1.5/min) is
+        # REQUIRED here: sqrt(ao)/r and sqrt(pl)/r are dimensionless, so without it
+        # the speed comes out 1/XKE = 13.45x too large (103.5 km/s instead of 7.7).
+        rdot = XKE * math.sqrt(self.ao) * esine / r
+        rfdot = XKE * math.sqrt(pl) / r
 
         # Calculate true anomaly
         cosu = (cose - e) / (1.0 - ecose)
@@ -980,7 +983,9 @@ class SGP4Propagator:
         Returns:
             Orbital period in seconds
         """
-        return 2.0 * math.pi / self.no
+        # self.no is the mean motion in rad/min, so 2*pi/no is the period in
+        # MINUTES. The documented contract (and callers) expect seconds.
+        return 60.0 * 2.0 * math.pi / self.no
 
     def get_semi_major_axis(self) -> float:
         """Get semi-major axis in km.

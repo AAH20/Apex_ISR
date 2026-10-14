@@ -8,19 +8,15 @@ Written test-first (TDD). Covers:
 
 from __future__ import annotations
 
-import pytest
 
 from src.isr.cross_int import (
     CorrelationType,
     CrossIntCorrelator,
-    DisambiguationResult,
     EntityDisambiguator,
-    IdentityResolution,
     IdentityResolver,
 )
 from src.isr.entity_resolution import (
     EntityObservation,
-    EntityResolver,
     EntityType,
     INTSource,
     ResolvedEntity,

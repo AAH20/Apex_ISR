@@ -10,7 +10,7 @@ This module provides:
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Optional
 
 import numpy as np
@@ -121,7 +121,6 @@ def collision_probability_2d(
     if sigma_sq < 1e-20:
         return 1.0 if miss_distance < hard_body_radius else 0.0
 
-    sigma = math.sqrt(sigma_sq)
     R = hard_body_radius
     d = miss_distance
 

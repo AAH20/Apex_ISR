@@ -249,10 +249,11 @@ class RobustKalmanFilter:
         # Innovation covariance
         S = H @ self.P @ H.T + R_eff
 
-        # Compute Huber weights for each measurement component
-        # Use normalized innovation for weight computation
-        S_inv = np.linalg.inv(S)
-        normalized_innovation = np.sqrt(np.abs(y.T @ S_inv @ y))
+        # Compute Huber weights for each measurement component.
+        # The scalar branch below normalises inline as y[0]/sqrt(S[0,0]). The general
+        # vector Mahalanobis form was computed here but never consumed by any branch,
+        # so it -- and the O(n^3) S_inv inversion feeding only it -- is removed from
+        # this per-update hot path.
 
         outlier_detected = False
         if self.m == 1:

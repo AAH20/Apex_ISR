@@ -29,7 +29,10 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 . || true --count --max-line-length=120 --extend-ignore=E203,W503 --statistics
+          # NOTE: `flake8 . || true --flags` sends the flags to `true`, not flake8,
+          # so the linter ran bare and its exit code was masked. --exit-zero keeps
+          # lint advisory while actually passing the flags to the tool.
+          flake8 . --count --max-line-length=120 --extend-ignore=E203,W503 --statistics --exit-zero
 
       - name: Test with pytest
         run: |

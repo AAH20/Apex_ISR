@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import math
 import time
 
-import pytest
 
 from src.isr.threat import (
     Alert,

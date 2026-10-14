@@ -6,7 +6,6 @@ import math
 import pytest
 
 from src.fusion.orbital_graph import (
-    OrbitalEdge,
     OrbitalGraph,
     OrbitalObject,
 )

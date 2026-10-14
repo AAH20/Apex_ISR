@@ -3,8 +3,6 @@
 import pytest
 
 from src.isr.collection import (
-    CollectionPlan,
-    CollectionTask,
     ISRCollectionManager,
     Priority,
     Sensor,
@@ -388,7 +386,7 @@ class TestStats:
         mgr.register_sensor(Sensor(sensor_id="S1", sensor_type=SensorType.RADAR))
         mgr.create_task(SensorType.RADAR, "A", priority=Priority.HIGH)
         mgr.create_task(SensorType.EO_IR, "B", priority=Priority.LOW)
-        plan = mgr.create_plan()
+        mgr.create_plan()
         stats = mgr.get_stats()
         assert stats["total_tasks"] == 2
         assert stats["total_sensors"] == 1

@@ -17,12 +17,10 @@ from typing import List, Optional
 
 class TLEParseError(Exception):
     """Exception raised for TLE parsing errors."""
-    pass
 
 
 class TLEChecksumError(TLEParseError):
     """Exception raised when TLE checksum verification fails."""
-    pass
 
 
 # ─── Data Class ───────────────────────────────────────────────────────────────
